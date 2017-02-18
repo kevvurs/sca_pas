@@ -1,11 +1,5 @@
 package sca_pas.asynch;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -14,50 +8,24 @@ import sca_pas.main.PageParse;
 import sca_pas.util.Reporter;
 import sca_pas.util.Resources;
 
+// Get exact parcel IDs
 public class ParseTask implements Callable<List<String>> {
 	public static final Reporter r = new Reporter(ParseTask.class.getName());
-	private final String link;
+	private final String pageLink;
 	
-	public ParseTask(String link) {
-		this.link = link;
+	public ParseTask(Integer pageNumber) {
+		this.pageLink = new StringBuilder()
+			.append(Resources.universalTemplate[0])
+			.append(pageNumber)
+			.append(Resources.universalTemplate[1])
+			.toString();
+		
 	}
 	
 	@Override
 	public List<String> call() {
-		
-		
-		// Get page
-		String listing = "";
-		URL ref;
-		try {
-			ref = new URL(this.link);
-		} catch (MalformedURLException e) {
-			r.log("Internet connection issue encountered.", e);
-			return new ArrayList<String>();
-		}
-		
-		// Connect to the target
-		try {
-			HttpURLConnection portal = (HttpURLConnection) ref.openConnection();
-			portal.setRequestMethod("GET");
-			portal.setRequestProperty("Accept", "text/html");
-			portal.setRequestProperty("charset", "utf-8");
-			portal.connect();
-			
-			BufferedReader rd = new BufferedReader(new InputStreamReader(portal.getInputStream()));
-			StringBuilder reponseBuilder = new StringBuilder();	
-			String line;
-			while ((line = rd.readLine()) != null) {
-				reponseBuilder.append(line);
-			}
-			rd.close();
-			portal.disconnect();
-			listing = reponseBuilder.toString();
-			return marshal(listing);
-		} catch (IOException e) {
-			r.log("Error reading data stream from site.", e);
-			return new ArrayList<String>();
-		}
+		String listingPage = PageParse.visit(pageLink);
+		return marshal(listingPage);
 	}
 	
 	private List<String> marshal(String html) {

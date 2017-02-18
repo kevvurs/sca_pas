@@ -6,7 +6,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import sca_pas.util.Reporter;
@@ -18,17 +18,18 @@ public class DataEngine {
 	public static final Reporter r = new Reporter(DataEngine.class.getName());
 	
 	public static void main(String[] args) {
-		Set<String> parcelIds = new HashSet<String>();
-		char[] nums = Resources.decNums;
-		for (int i = 0; i < nums.length; i++) {
-			String page = search(nums[i]);
-			Set<String> partialSet = PageParse.aggregate(page);
-			parcelIds.addAll(partialSet);
-		}
+		Set<String> parcelIds = PageParse.mine(Resources.pageLimit);
 		r.log("IDs pulled: " + parcelIds.size());
+		List<List<String>> tableRows = PageParse.mine(parcelIds);
+		r.log("Rows to export: " + tableRows.size());
+		PersistTable.output(tableRows);
+
+		r.log("done\n");
 	}
 	
 	// Search all decimal number page results.
+	@SuppressWarnings("unused")
+	@Deprecated
 	private static String search(char param) {
 		r.log("Searching: " + param);
 		String query = (Resources.requestTemplate + param);
